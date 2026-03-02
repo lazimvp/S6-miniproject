@@ -17,6 +17,110 @@ export default function FloatingCollegeAssistant() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
+  // 🎤 Speech recognition
+const recognitionRef = useRef(null);
+
+const startListening = () => {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Speech recognition not supported in this browser");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.start();
+
+  recognition.onresult = (event) => {
+    const voiceText = event.results[0][0].transcript;
+    setInput(voiceText);      // put text in input
+    setVoiceMode(false);      // close listening UI
+
+    setTimeout(() => {
+      sendMessageFromVoice(voiceText);
+    }, 500);
+  };
+
+  recognitionRef.current = recognition;
+};
+
+// helper to send voice message
+const sendMessageFromVoice = async (voiceText) => {
+  if (!voiceText.trim() || loading || !currentSection) return;
+
+  const userMessage = voiceText;
+
+  setChats((prev) => ({
+    ...prev,
+    [currentSection]: [
+      ...prev[currentSection],
+      { role: "user", text: userMessage },
+    ],
+  }));
+
+  setLoading(true);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: userMessage,
+        purpose: currentSection,
+      }),
+    });
+
+    const data = await res.json();
+
+    setChats((prev) => ({
+      ...prev,
+      [currentSection]: [
+        ...prev[currentSection],
+        { role: "bot", text: data.answer },
+      ],
+    }));
+
+    speakText(data.answer); // 🔊 bot speaks
+  } catch (err) {
+    console.error(err);
+  }
+
+  setLoading(false);
+};
+
+// 🔊 text to speech (force female voice)
+const speakText = (text) => {
+  if (!text) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+
+  const setFemaleVoice = () => {
+    const voices = window.speechSynthesis.getVoices();
+
+    const femaleVoice =
+      voices.find(v => v.name.includes("Microsoft Zira")) ||
+      voices.find(v => v.name.includes("Google UK English Female")) ||
+      voices.find(v => v.name.includes("Microsoft Heera"));
+
+    if (femaleVoice) {
+      utterance.voice = femaleVoice;
+      utterance.pitch = 1.2;
+      utterance.rate = 1;
+    }
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // ✅ IMPORTANT: wait for voices to load
+  if (speechSynthesis.getVoices().length === 0) {
+    speechSynthesis.onvoiceschanged = setFemaleVoice;
+  } else {
+    setFemaleVoice();
+  }
+};
 
   const [chats, setChats] = useState(() => {
     const obj = {};
@@ -146,21 +250,10 @@ export default function FloatingCollegeAssistant() {
                     ))}
                   </div>
                 </div>
-
-                {/* Mic Button */}
-                <div className="flex justify-center mb-6">
-                  <div className="relative">
-                    <div className="absolute inset-0 rounded-full bg-blue-500 opacity-30 animate-ping"></div>
-                    <button
-                      onClick={() => setVoiceMode(true)}
-                      className="relative w-16 h-16 bg-gradient-to-br from-blue-800 to-blue-600 text-white rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition"
-                    >
-                      🎤  
-                    </button>
-                  </div>
                 </div>
-              </div>
-            )}
+                )}
+                
+            
 
             {/* CHAT VIEW */}
             {currentSection && (
@@ -217,6 +310,16 @@ export default function FloatingCollegeAssistant() {
                 placeholder="Ask something..."
                 className="flex-1 px-4 py-2 text-sm border border-blue-200 rounded-full outline-none focus:ring-2 focus:ring-blue-400"
               />
+              {/* 🎤 MIC BUTTON */}
+              <button
+                onClick={() => {
+                  setVoiceMode(true);
+                  startListening();
+                }}
+                className="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center"
+              >
+                🎤
+              </button>
 
               <button
                 onClick={sendMessage}
