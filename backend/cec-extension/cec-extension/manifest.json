@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "CEC AI Assistant",
+  "version": "1.0",
+  "description": "AI Assistant widget for College of Engineering Chengannur",
+  "permissions": [],
+  "content_scripts": [
+    {
+      "matches": ["*://*.ceconline.edu/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}

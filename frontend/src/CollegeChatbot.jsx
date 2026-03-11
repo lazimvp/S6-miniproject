@@ -94,6 +94,8 @@ const sendMessageFromVoice = async (voiceText) => {
 const speakText = (text) => {
   if (!text) return;
 
+  window.speechSynthesis.cancel(); // stop previous speech
+
   const utterance = new SpeechSynthesisUtterance(text);
 
   const setFemaleVoice = () => {
@@ -120,6 +122,11 @@ const speakText = (text) => {
   } else {
     setFemaleVoice();
   }
+};
+
+// 🛑 Stop speaking immediately
+const stopSpeech = () => {
+  window.speechSynthesis.cancel();
 };
 
   const [chats, setChats] = useState(() => {
@@ -328,6 +335,15 @@ const speakText = (text) => {
               >
                 Send
               </button>
+
+              <button
+                onClick={stopSpeech}
+                className="bg-red-500 text-white px-3 py-2 text-sm rounded-full"
+              >
+                Stop
+              </button>
+
+
             </div>
           )}
         </div>
