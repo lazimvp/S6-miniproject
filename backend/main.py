@@ -109,22 +109,9 @@ def generate_answer(question: str, chunks: list, purpose: str = None) -> str:
     topic_hint = f" The user is asking about: {purpose}." if purpose else ""
 
     prompt = f"""You are a helpful and accurate assistant for College of Engineering Chengannur (CEC), Kerala.
-Answer the question using the KEY FACTS and CONTEXT below.{topic_hint}
+Answer the question using the retrieved information only.{topic_hint}
 
-{CEC_FACTS}
 
-RULES:
-- Always answer directly and confidently — the KEY FACTS above are 100% accurate
-- Use bullet points when listing multiple items
-- For courses: list ONLY CEC programmes (CSE, AI&ML, ECE, EEE, MCA) — never mention medical/pharmacy/other colleges
-- For hostel: list all 6 hostels from KEY FACTS
-- For principal: Dr. Hari V S
-- For HOD CS/CSE/Computer Science: Dr. Renu George
-- Never say "not mentioned" if the answer is in KEY FACTS
-- Never include student personal data
-
-CONTEXT FROM COLLEGE WEBSITE:
-{context}
 
 Question: {question}
 
